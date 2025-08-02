@@ -310,21 +310,47 @@ if uploaded_users and uploaded_operators_sessions:
 
                 # --- Análisis Temporal ---
                 st.header("🗓️ Evolución Temporal")
-                daily_volume = df_filtrado.groupby('Fecha').agg(
-                    total_conversations=('Conversaciones cerradas', 'sum'),
-                    avg_handle_time=('Conversación con agente', 'mean')
-                ).reset_index()
-
-                fig_daily = px.line(
-                    daily_volume, x='Fecha', y='total_conversations',
-                    title='Volumen de Conversaciones por Día',
-                    labels={'Fecha': 'Día', 'total_conversations': 'Nº de Conversaciones'},
-                    markers=True
+                daily_volume = (
+                    df_filtrado.groupby(['Fecha', 'Nombre Agente'])
+                    .agg(total_conversations=('Conversaciones cerradas', 'sum'))
+                    .reset_index()
                 )
-                fig_daily.update_layout(showlegend=False)
-                st.plotly_chart(fig_daily, use_container_width=True, theme="streamlit")
+
+                view_mode = st.radio(
+                    "Visualización",
+                    ["Gráfico", "Tabla"],
+                    horizontal=True,
+                    key="daily_view_mode",
+                )
+
+                if view_mode == "Tabla":
+                    pivot_daily = (
+                        daily_volume.pivot(
+                            index='Fecha',
+                            columns='Nombre Agente',
+                            values='total_conversations'
+                        )
+                        .fillna(0)
+                        .astype(int)
+                    )
+                    st.dataframe(pivot_daily, use_container_width=True)
+                else:
+                    fig_daily = px.line(
+                        daily_volume,
+                        x='Fecha',
+                        y='total_conversations',
+                        color='Nombre Agente',
+                        title='Volumen de Conversaciones por Día',
+                        labels={
+                            'Fecha': 'Día',
+                            'total_conversations': 'Nº de Conversaciones',
+                            'Nombre Agente': 'Agente',
+                        },
+                        markers=True,
+                    )
+                    st.plotly_chart(fig_daily, use_container_width=True, theme="streamlit")
                 st.info(
-                    "**¿Cómo interpretar este gráfico?** Este gráfico muestra el número de conversaciones **iniciadas** cada día, basándose en la 'Fecha/tiempo Inicio Sesión'. Es una métrica clave para entender la demanda entrante y los picos de trabajo, independientemente de si la conversación se resuelve el mismo día o en días posteriores."
+                    "**¿Cómo interpretar este gráfico?** Este gráfico muestra el número de conversaciones **iniciadas** cada día, desglosado por agente según la 'Fecha/tiempo Inicio Sesión'. Permite entender la demanda entrante y la carga de trabajo de cada agente, independientemente de si la conversación se resuelve el mismo día o en días posteriores."
                 )
 
                 st.divider()
