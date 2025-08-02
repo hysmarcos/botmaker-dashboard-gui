@@ -311,20 +311,45 @@ if uploaded_users and uploaded_operators_sessions:
                 # --- Análisis Temporal ---
                 st.header("🗓️ Evolución Temporal")
                 daily_volume = df_filtrado.groupby('Fecha').agg(
-                    total_conversations=('Conversaciones cerradas', 'sum'),
-                    avg_handle_time=('Conversación con agente', 'mean')
+                    sesiones_iniciadas=('Id Sesión', 'nunique'),
+                    cierres_conversacion=('Conversaciones cerradas', 'sum')
                 ).reset_index()
 
                 fig_daily = px.line(
-                    daily_volume, x='Fecha', y='total_conversations',
+                    daily_volume,
+                    x='Fecha',
+                    y=['sesiones_iniciadas', 'cierres_conversacion'],
                     title='Volumen de Conversaciones por Día',
-                    labels={'Fecha': 'Día', 'total_conversations': 'Nº de Conversaciones'},
+                    labels={'Fecha': 'Día', 'value': 'Cantidad', 'variable': 'Indicador'},
                     markers=True
                 )
-                fig_daily.update_layout(showlegend=False)
+                fig_daily.update_traces(mode='lines+markers')
+                fig_daily.update_layout(showlegend=True, hovermode='x unified')
+                fig_daily.data[0].name = 'Sesiones iniciadas'
+                fig_daily.data[0].hovertemplate = 'Sesiones iniciadas: %{y}<extra></extra>'
+                fig_daily.data[1].name = 'Cierres de conversación'
+                fig_daily.data[1].hovertemplate = 'Cierres de conversación: %{y}<extra></extra>'
+
+                avg_iniciadas = daily_volume['sesiones_iniciadas'].mean()
+                avg_cierres = daily_volume['cierres_conversacion'].mean()
+                fig_daily.add_hline(
+                    y=avg_iniciadas,
+                    line_dash='dot',
+                    line_color='#FFA500',
+                    annotation_text=f'Prom. iniciadas: {avg_iniciadas:.1f}',
+                    annotation_position='bottom right'
+                )
+                fig_daily.add_hline(
+                    y=avg_cierres,
+                    line_dash='dot',
+                    line_color='#FFA500',
+                    annotation_text=f'Prom. cierres: {avg_cierres:.1f}',
+                    annotation_position='top right'
+                )
+
                 st.plotly_chart(fig_daily, use_container_width=True, theme="streamlit")
                 st.info(
-                    "**¿Cómo interpretar este gráfico?** Este gráfico muestra el número de conversaciones **iniciadas** cada día, basándose en la 'Fecha/tiempo Inicio Sesión'. Es una métrica clave para entender la demanda entrante y los picos de trabajo, independientemente de si la conversación se resuelve el mismo día o en días posteriores."
+                    "**¿Cómo interpretar este gráfico?** Muestra el número de sesiones **iniciadas** y las conversaciones **cerradas** cada día. Las líneas punteadas reflejan el promedio diario como referencia general."
                 )
 
                 st.divider()
@@ -364,7 +389,9 @@ if uploaded_users and uploaded_operators_sessions:
                     )
                     if pd.notna(avg_handle_time_seconds):
                         fig_aht.add_hline(
-                            y=avg_handle_time_seconds / 60, line_dash="dot",
+                            y=avg_handle_time_seconds / 60,
+                            line_dash="dot",
+                            line_color="#FFA500",
                             annotation_text=f"Promedio Equipo: {avg_handle_time_seconds/60:.1f} min",
                             annotation_position="bottom right"
                         )
@@ -385,7 +412,9 @@ if uploaded_users and uploaded_operators_sessions:
                     )
                     if pd.notna(avg_response_time_hours) and avg_response_time_hours > 0:
                         fig_response.add_hline(
-                            y=avg_response_time_hours, line_dash="dot",
+                            y=avg_response_time_hours,
+                            line_dash="dot",
+                            line_color="#FFA500",
                             annotation_text=f"Promedio Equipo: {avg_response_time_hours:.2f} hrs",
                             annotation_position="bottom right",
                         )
