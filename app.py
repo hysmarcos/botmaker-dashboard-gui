@@ -170,6 +170,18 @@ def clean_and_prepare_data(_df_sessions, _df_users):
 st.title("🚀 Dashboard Avanzado de Productividad de Agentes")
 st.markdown("Análisis integral del rendimiento, carga de trabajo y eficiencia operativa del equipo de atención.")
 
+with st.container():
+    st.markdown("### 🎯 Objetivos del Dashboard")
+    st.markdown("Proporcionar una visión integral del desempeño del equipo de atención, identificando oportunidades de mejora y seguimiento de la productividad.")
+    st.markdown("### 📚 Secciones Clave")
+    st.markdown("- 📈 **KPIs**: métricas resumidas para evaluar rápidamente el estado del equipo.")
+    st.markdown("- ⚙️ **Rendimiento**: análisis detallado del volumen de trabajo y tiempos de respuesta.")
+    st.markdown("- 🏷️ **Tipificaciones**: clasificación de las conversaciones para entender resultados y motivos.")
+    st.markdown("### 🧭 Instrucciones de Uso")
+    st.markdown("- 📁 **Carga de archivos**: sube los datasets de usuarios y sesiones desde la barra lateral.")
+    st.markdown("- 🎚️ **Filtros**: utiliza los controles superiores para delimitar fechas, colas y agentes.")
+    st.markdown("- 📖 **Interpretación**: revisa cada sección para obtener insights y tomar decisiones informadas.")
+
 # --- Carga de Archivos en la Barra Lateral ---
 st.sidebar.header("Carga de Archivos")
 
