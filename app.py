@@ -223,6 +223,25 @@ if uploaded_users and uploaded_operators_sessions:
             df_procesado = clean_and_prepare_data(df_sessions_raw.copy(), df_users_raw.copy())
 
             # --- Header con Filtros ---
+            st.markdown(
+                """
+                <style>
+                    .sticky-filter {
+                        position: sticky;
+                        top: 0;
+                        z-index: 999;
+                        background-color: #ffffff;
+                        padding-top: 0.5rem;
+                        padding-bottom: 0.5rem;
+                    }
+                    [data-theme="dark"] .sticky-filter {
+                        background-color: #0e1117;
+                    }
+                </style>
+                """,
+                unsafe_allow_html=True,
+            )
+            st.markdown('<div class="sticky-filter">', unsafe_allow_html=True)
             st.header("🔍 Filtros de Análisis")
             with st.expander("Selecciona los filtros para acotar el análisis", expanded=True):
                 col1, col2, col3 = st.columns(3)
@@ -249,6 +268,7 @@ if uploaded_users and uploaded_operators_sessions:
                     min_value=min_fecha, max_value=max_fecha,
                     help="Selecciona el rango de fechas para el análisis."
                 )
+            st.markdown('</div>', unsafe_allow_html=True)
 
             # --- Aplicar Filtros ---
             if len(fecha_seleccionada) != 2:
