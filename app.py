@@ -54,7 +54,14 @@ def load_sessions_data(uploaded_file):
     if uploaded_file:
         try:
             # Se usa sep='\t' y skiprows=[1] para omitir la fila de descripción que causa problemas
-            return pd.read_csv(uploaded_file, sep='\t', engine='python', on_bad_lines='skip', skiprows=[1])
+            df = pd.read_csv(uploaded_file, sep='\t', engine='python', on_bad_lines='skip', skiprows=[1])
+
+            # Normalizar nombres de columnas para manejar variantes del archivo de sesiones
+            df.columns = df.columns.str.strip()
+            if 'Fecha/tiempo Cierre' in df.columns and 'Fecha/tiempo Fin Sesión' not in df.columns:
+                df = df.rename(columns={'Fecha/tiempo Cierre': 'Fecha/tiempo Fin Sesión'})
+
+            return df
         except Exception as e:
             st.error(f"Error al leer el archivo de sesiones '{uploaded_file.name}': {e}")
             return None
