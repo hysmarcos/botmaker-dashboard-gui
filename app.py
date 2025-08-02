@@ -167,7 +167,7 @@ def clean_and_prepare_data(_df_sessions, _df_users):
     return df_merged
 
 # --- Título del Dashboard ---
-st.title("🚀 Dashboard Avanzado de Productividad de Agentes")
+st.title("Dashboard Avanzado de Productividad de Agentes")
 st.markdown("Análisis integral del rendimiento, carga de trabajo y eficiencia operativa del equipo de atención.")
 
 # --- Carga de Archivos en la Barra Lateral ---
@@ -281,28 +281,32 @@ if uploaded_users and uploaded_operators_sessions:
                 avg_response_time_hours = (avg_response_time_seconds / 3600) if pd.notna(avg_response_time_seconds) else 0
 
                 # Se cambia a 5 columnas para el nuevo KPI
-                kpi_cols = st.columns(5)
-                kpi_cols[0].metric(label="Total Conversaciones Atendidas", value=f"{int(total_conversations):,}")
+                kpi_cols = st.columns(4)
+                kpi_cols[0].metric(
+                    label="Total Conversaciones Atendidas",
+                    value=f"{int(total_conversations):,}",
+                    help="Total de conversaciones atendidas en el periodo.\n\n**Fórmula:** Σ Conversaciones cerradas.",
+                )
                 kpi_cols[1].metric(
                     label="Tasa de Abandono (Usuario)",
                     value=f"{abandon_rate:.1f}%",
-                    help="Porcentaje de conversaciones que fueron abandonadas por el usuario del total de conversaciones atendidas. Un valor alto puede indicar largos tiempos de espera."
+                    help="Porcentaje de conversaciones abandonadas por el usuario.\n\n**Fórmula:** (Abandonadas / Conversaciones cerradas) × 100.",
                 )
+                # kpi_cols[2].metric(
+                #     label="Total Transferencias",
+                #     value=f"{int(total_transfers):,}",
+                #     help="Fórmula: Σ Transferencias realizadas. Número total de transferencias hechas por los agentes.",
+                # )
                 kpi_cols[2].metric(
-                    label="Total Transferencias",
-                    value=f"{int(total_transfers):,}",
-                    help="Número total de veces que los agentes transfirieron una conversación a otra cola o agente."
-                )
-                kpi_cols[3].metric(
                     label="Tiempo Promedio Conversación (AHT)",
                     value=f"{avg_handle_time_seconds / 60:.1f} min" if pd.notna(avg_handle_time_seconds) else "N/A",
-                    help="Average Handle Time: Tiempo promedio total que un agente dedica a una conversación activa."
+                    help="Average Handle Time en minutos.\n\n**Fórmula:** Promedio(Conversación con agente) / 60.",
                 )
                 # --- NUEVO WIDGET DE KPI ---
-                kpi_cols[4].metric(
+                kpi_cols[3].metric(
                     label="Tiempo Medio de Respuesta",
                     value=f"{avg_response_time_hours:.2f} hrs" if avg_response_time_hours > 0 else "N/A",
-                    help="Tiempo promedio que tarda un agente en enviar su primera respuesta en una conversación, medido en horas. Se ignoran las conversaciones sin respuesta."
+                    help="Tiempo hasta la primera respuesta en horas.\n\n**Fórmula:** Promedio(Tiempo medio de respuesta) / 3600. ",
                 )
 
                 st.divider()
@@ -350,7 +354,7 @@ if uploaded_users and uploaded_operators_sessions:
                     fig_convs.update_traces(textposition='outside')
                     fig_convs.update_layout(showlegend=False)
                     st.plotly_chart(fig_convs, use_container_width=True, theme="streamlit")
-                    st.info("**¿Qué significa esto?** Muestra la cantidad total de conversaciones que cada agente ha cerrado en el periodo seleccionado. Ayuda a entender la distribución de la carga de trabajo.")
+                    st.info(" Muestra la cantidad total de conversaciones que cada agente ha cerrado en el periodo seleccionado. Ayuda a entender la distribución de la carga de trabajo.")
 
                 with chart_cols[1]:
                     st.subheader("Tiempo Promedio de Conversación (AHT)")
@@ -369,7 +373,7 @@ if uploaded_users and uploaded_operators_sessions:
                         )
                     fig_aht.update_layout(showlegend=False)
                     st.plotly_chart(fig_aht, use_container_width=True, theme="streamlit")
-                    st.info("**¿Qué significa esto?** Mide el tiempo promedio que un agente dedica a una conversación. Un AHT más bajo suele indicar mayor eficiencia. La línea punteada muestra el promedio de todo el equipo para una fácil comparación.")
+                    st.info(" Mide el tiempo promedio que un agente dedica a una conversación. Un AHT más bajo suele indicar mayor eficiencia. La línea punteada muestra el promedio de todo el equipo para una fácil comparación.")
 
                 with chart_cols[2]:
                     st.subheader("Tiempo Medio de Respuesta por Agente")
@@ -390,12 +394,12 @@ if uploaded_users and uploaded_operators_sessions:
                         )
                     fig_response.update_layout(showlegend=False)
                     st.plotly_chart(fig_response, use_container_width=True, theme="streamlit")
-                    st.info("**¿Qué significa esto?** Refleja el tiempo promedio que demora cada agente en enviar su primera respuesta. Valores más bajos indican una atención inicial más rápida.")
+                    st.info(" Refleja el tiempo promedio que demora cada agente en enviar su primera respuesta. Valores más bajos indican una atención inicial más rápida.")
 
                 st.divider()
 
                 # --- Matriz de Eficiencia vs. Carga de Trabajo ---
-                st.header("🗺️ Matriz de Eficiencia vs. Carga de Trabajo")
+                st.header("⏺️ Matriz de Eficiencia vs. Carga de Trabajo")
                 fig_scatter = px.scatter(
                     agent_performance,
                     x='total_conversations',
@@ -437,7 +441,7 @@ if uploaded_users and uploaded_operators_sessions:
                         fig_tipif_bar.update_layout(showlegend=False, yaxis_title=None)
                         st.plotly_chart(fig_tipif_bar, use_container_width=True, theme="streamlit")
                         st.info(
-                            "**¿Qué significa esto?** Este gráfico muestra el resultado final de las conversaciones. Es más fácil de leer que un gráfico de torta y permite comparar rápidamente las categorías más comunes."
+                            " Este gráfico muestra el resultado final de las conversaciones. Es más fácil de leer que un gráfico de torta y permite comparar rápidamente las categorías más comunes."
                         )
 
                     with col2:
@@ -450,7 +454,7 @@ if uploaded_users and uploaded_operators_sessions:
                         )
                         st.plotly_chart(fig_stacked_bar, use_container_width=True, theme="streamlit")
                         st.info(
-                            "**¿Qué significa esto?** Compara cómo se distribuyen los resultados de las conversaciones entre los diferentes agentes. Ayuda a identificar si ciertos agentes se especializan o tienen mejores resultados en tipos específicos de interacciones."
+                            " Compara cómo se distribuyen los resultados de las conversaciones entre los diferentes agentes. Ayuda a identificar si ciertos agentes se especializan o tienen mejores resultados en tipos específicos de interacciones."
                         )
                 else:
                     st.info("No hay datos de tipificación disponibles para el periodo y filtros seleccionados.")
