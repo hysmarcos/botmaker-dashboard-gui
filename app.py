@@ -455,6 +455,35 @@ if uploaded_users and uploaded_operators_sessions:
                 else:
                     st.info("No hay datos de tipificación disponibles para el periodo y filtros seleccionados.")
 
+                st.header("Conclusiones")
+                top_agents = (
+                    agent_performance.sort_values('total_conversations', ascending=False)
+                    .head(3)['Nombre Agente'].tolist()
+                )
+                st.markdown(
+                    f"""
+                    **Indicadores clave**
+                    - Conversaciones totales analizadas: **{int(total_conversations):,}**
+                    - Agentes con mayor volumen: **{', '.join(top_agents)}**
+
+                    **Alertas o logros**
+                    - Tasa de abandono: **{abandon_rate:.1f}%**
+                    - Tiempo medio de respuesta: **{avg_response_time_hours:.2f} hrs**
+
+                    **Recomendaciones**
+                    - Capacitar a los agentes con mayor AHT.
+                    - Revisar tipificaciones frecuentes para optimizar flujos.
+                    - Monitorear las colas con mayor abandono.
+                    """
+                )
+                st.markdown(
+                    """
+                    **Recursos adicionales**
+                    - [Guía para optimizar el AHT](https://www.callcentrehelper.com/how-to-reduce-average-handle-time-1689.htm)
+                    - [Documento interno de tipificaciones](https://intranet.empresa.com/tipificaciones)
+                    """
+                )
+
 else:
     # MEJORA 2: Mostrar video instructivo si no hay archivos cargados.
     st.info("👋 ¡Bienvenido! Sube los archivos de 'Usuarios' y 'Sesiones de Agentes' para comenzar el análisis.")
