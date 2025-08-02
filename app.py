@@ -333,11 +333,12 @@ if uploaded_users and uploaded_operators_sessions:
                 agent_performance = df_filtrado.groupby('Nombre Agente').agg(
                     total_conversations=('Conversaciones cerradas', 'sum'),
                     avg_handle_time=('Conversación con agente', 'mean'),
+                    avg_response_time=('Tiempo medio de respuesta', 'mean'),
                     total_transfers=('Transferencias realizadas', 'sum'),
                     total_messages=('Mensajes Agente', 'sum')
                 ).reset_index().sort_values(by='total_conversations', ascending=False)
 
-                chart_cols = st.columns(2)
+                chart_cols = st.columns(3)
                 with chart_cols[0]:
                     st.subheader("Conversaciones Atendidas por Agente")
                     fig_convs = px.bar(
@@ -369,6 +370,27 @@ if uploaded_users and uploaded_operators_sessions:
                     fig_aht.update_layout(showlegend=False)
                     st.plotly_chart(fig_aht, use_container_width=True, theme="streamlit")
                     st.info("**¿Qué significa esto?** Mide el tiempo promedio que un agente dedica a una conversación. Un AHT más bajo suele indicar mayor eficiencia. La línea punteada muestra el promedio de todo el equipo para una fácil comparación.")
+
+                with chart_cols[2]:
+                    st.subheader("Tiempo Medio de Respuesta por Agente")
+                    fig_response = px.bar(
+                        agent_performance,
+                        x='Nombre Agente',
+                        y=agent_performance['avg_response_time'] / 3600,
+                        title="Tiempo Medio de Respuesta (Horas)",
+                        labels={'Nombre Agente': 'Agente', 'y': 'Tiempo (hrs)'},
+                        text=(agent_performance['avg_response_time'] / 3600).round(2),
+                        color='Nombre Agente'
+                    )
+                    if pd.notna(avg_response_time_hours) and avg_response_time_hours > 0:
+                        fig_response.add_hline(
+                            y=avg_response_time_hours, line_dash="dot",
+                            annotation_text=f"Promedio Equipo: {avg_response_time_hours:.2f} hrs",
+                            annotation_position="bottom right",
+                        )
+                    fig_response.update_layout(showlegend=False)
+                    st.plotly_chart(fig_response, use_container_width=True, theme="streamlit")
+                    st.info("**¿Qué significa esto?** Refleja el tiempo promedio que demora cada agente en enviar su primera respuesta. Valores más bajos indican una atención inicial más rápida.")
 
                 st.divider()
 
