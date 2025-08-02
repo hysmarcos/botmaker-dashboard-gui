@@ -14,29 +14,26 @@ st.set_page_config(
 # --- Estilos CSS para mejorar la apariencia ---
 st.markdown("""
 <style>
-    /* Estilo para las tarjetas de métricas (KPIs) */
-    .stMetric {
+    /* Tarjetas de métricas (KPIs) */
+    div[data-testid="metric-container"] {
         border: 1px solid rgba(0,0,0,0.1);
         border-radius: 10px;
         padding: 15px;
+        background-color: var(--secondary-background-color);
         text-align: center;
-        background-color: #f9f9f9; /* Un fondo muy sutil */
     }
-    /* El tema oscuro de Streamlit sobreescribirá esto si está activo */
-    [data-theme="dark"] .stMetric {
-        background-color: #262730;
+    [data-theme="dark"] div[data-testid="metric-container"] {
         border-color: rgba(255,255,255,0.2);
     }
-    .stMetric .st-emotion-cache-1g8m2i9 { /* Selector para el valor de la métrica */
+    div[data-testid="stMetricValue"] {
         font-size: 2.2rem;
         font-weight: bold;
+        color: var(--text-color);
     }
-    .stMetric .st-emotion-cache-1xarl3l { /* Selector para la etiqueta de la métrica */
+    div[data-testid="stMetricLabel"] {
         font-size: 1rem;
-        color: #6c757d; /* Un gris suave para la etiqueta */
-    }
-    [data-theme="dark"] .stMetric .st-emotion-cache-1xarl3l {
-        color: #a0a4a8;
+        color: var(--text-color);
+        opacity: 0.6;
     }
     .block-container {
         padding-top: 2rem;
