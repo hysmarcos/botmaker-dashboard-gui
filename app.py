@@ -223,8 +223,22 @@ if uploaded_users and uploaded_operators_sessions:
             df_procesado = clean_and_prepare_data(df_sessions_raw.copy(), df_users_raw.copy())
 
             # --- Header con Filtros ---
-            st.header("🔍 Filtros de Análisis")
-            with st.expander("Selecciona los filtros para acotar el análisis", expanded=True):
+            st.markdown(
+                """
+                <style>
+                div[data-testid="stExpander"] {
+                    position: sticky;
+                    top: 0;
+                    z-index: 999;
+                    background-color: inherit;
+                }
+                </style>
+                """,
+                unsafe_allow_html=True,
+            )
+
+            with st.expander("🔍 Filtros de Análisis", expanded=True):
+                st.caption("Selecciona los filtros para acotar el análisis")
                 col1, col2, col3 = st.columns(3)
 
                 # Filtro de Agentes
