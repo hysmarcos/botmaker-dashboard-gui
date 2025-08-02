@@ -74,10 +74,10 @@ def load_users_data(uploaded_file):
 def validate_dataframes(df_sessions, df_users):
     """Valida que los dataframes cargados tengan las columnas necesarias para el análisis."""
     required_cols_sessions = [
-        'Id Sesión', 'Nombre Agente', 'Fecha/tiempo Inicio Sesión', 'Cola',
+        'Id Sesión', 'Nombre Agente', 'Fecha/tiempo Inicio Sesión', 'Fecha/tiempo Fin Sesión', 'Cola',
         'Conversaciones cerradas', 'Conversación con agente', 'Espera agente',
         'Cantidad de respuestas', 'Transferencias realizadas', 'Abandonada por usuario',
-        'Tiempo medio de respuesta' # <--- NUEVA COLUMNA AÑADIDA A LA VALIDACIÓN
+        'Tiempo medio de respuesta'
     ]
     required_cols_users = ['Id Sesión', 'Tipificación', 'Mensajes Agente']
 
@@ -127,9 +127,15 @@ def clean_and_prepare_data(_df_sessions, _df_users):
            _df_users[col] = pd.to_numeric(_df_users[col].replace('-', pd.NA), errors='coerce').fillna(0)
 
     # --- Preparación de Fechas ---
-    _df_sessions['Fecha/tiempo Inicio Sesión'] = pd.to_datetime(_df_sessions['Fecha/tiempo Inicio Sesión'], errors='coerce')
+    _df_sessions['Fecha/tiempo Inicio Sesión'] = pd.to_datetime(
+        _df_sessions['Fecha/tiempo Inicio Sesión'], errors='coerce'
+    )
+    _df_sessions['Fecha/tiempo Fin Sesión'] = pd.to_datetime(
+        _df_sessions['Fecha/tiempo Fin Sesión'], errors='coerce'
+    )
     _df_sessions.dropna(subset=['Fecha/tiempo Inicio Sesión'], inplace=True)
     _df_sessions['Fecha'] = _df_sessions['Fecha/tiempo Inicio Sesión'].dt.date
+    _df_sessions['Fecha Fin'] = _df_sessions['Fecha/tiempo Fin Sesión'].dt.date
 
     # --- Unión de los dataframes ---
     cols_to_merge = ['Id Sesión', 'Tipificación', 'Mensajes Agente', 'Mensajes Usuario', 'Mensajes Bot']
@@ -310,10 +316,26 @@ if uploaded_users and uploaded_operators_sessions:
 
                 # --- Análisis Temporal ---
                 st.header("🗓️ Evolución Temporal")
-                daily_volume = df_filtrado.groupby('Fecha').agg(
-                    sesiones_iniciadas=('Id Sesión', 'nunique'),
-                    cierres_conversacion=('Conversaciones cerradas', 'sum')
-                ).reset_index()
+                sesiones_iniciadas = (
+                    df_filtrado.groupby('Fecha')['Id Sesión'].nunique().rename('sesiones_iniciadas')
+                )
+                cierres_conversacion = (
+                    df_filtrado.dropna(subset=['Fecha Fin'])
+                    .groupby('Fecha Fin')['Id Sesión'].nunique().rename('cierres_conversacion')
+                )
+                daily_volume = (
+                    pd.concat([sesiones_iniciadas, cierres_conversacion], axis=1)
+                    .fillna(0)
+                    .sort_index()
+                    .reset_index()
+                    .rename(columns={'index': 'Fecha'})
+                )
+                daily_volume['trend_iniciadas'] = (
+                    daily_volume['sesiones_iniciadas'].rolling(window=7, min_periods=1).mean()
+                )
+                daily_volume['trend_cierres'] = (
+                    daily_volume['cierres_conversacion'].rolling(window=7, min_periods=1).mean()
+                )
 
                 fig_daily = px.line(
                     daily_volume,
@@ -330,26 +352,28 @@ if uploaded_users and uploaded_operators_sessions:
                 fig_daily.data[1].name = 'Cierres de conversación'
                 fig_daily.data[1].hovertemplate = 'Cierres de conversación: %{y}<extra></extra>'
 
-                avg_iniciadas = daily_volume['sesiones_iniciadas'].mean()
-                avg_cierres = daily_volume['cierres_conversacion'].mean()
-                fig_daily.add_hline(
-                    y=avg_iniciadas,
-                    line_dash='dot',
-                    line_color='#FFA500',
-                    annotation_text=f'Prom. iniciadas: {avg_iniciadas:.1f}',
-                    annotation_position='bottom right'
+                fig_daily.add_scatter(
+                    x=daily_volume['Fecha'],
+                    y=daily_volume['trend_iniciadas'],
+                    mode='lines',
+                    name='Tendencia iniciadas',
+                    line=dict(color=fig_daily.data[0].line.color, dash='dash'),
+                    line_shape='spline',
+                    hovertemplate='Tendencia iniciadas: %{y:.1f}<extra></extra>'
                 )
-                fig_daily.add_hline(
-                    y=avg_cierres,
-                    line_dash='dot',
-                    line_color='#FFA500',
-                    annotation_text=f'Prom. cierres: {avg_cierres:.1f}',
-                    annotation_position='top right'
+                fig_daily.add_scatter(
+                    x=daily_volume['Fecha'],
+                    y=daily_volume['trend_cierres'],
+                    mode='lines',
+                    name='Tendencia cierres',
+                    line=dict(color=fig_daily.data[1].line.color, dash='dash'),
+                    line_shape='spline',
+                    hovertemplate='Tendencia cierres: %{y:.1f}<extra></extra>'
                 )
 
                 st.plotly_chart(fig_daily, use_container_width=True, theme="streamlit")
                 st.info(
-                    "**¿Cómo interpretar este gráfico?** Muestra el número de sesiones **iniciadas** y las conversaciones **cerradas** cada día. Las líneas punteadas reflejan el promedio diario como referencia general."
+                    "**¿Cómo interpretar este gráfico?** Muestra el número de sesiones **iniciadas** y las conversaciones **cerradas** cada día. Las líneas de tendencia muestran cómo evoluciona el volumen a lo largo del tiempo."
                 )
 
                 st.divider()
