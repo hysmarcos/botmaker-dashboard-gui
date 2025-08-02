@@ -282,27 +282,31 @@ if uploaded_users and uploaded_operators_sessions:
 
                 # Se cambia a 5 columnas para el nuevo KPI
                 kpi_cols = st.columns(5)
-                kpi_cols[0].metric(label="Total Conversaciones Atendidas", value=f"{int(total_conversations):,}")
+                kpi_cols[0].metric(
+                    label="Total Conversaciones Atendidas",
+                    value=f"{int(total_conversations):,}",
+                    help="Fórmula: Σ Conversaciones cerradas. Total de conversaciones atendidas en el periodo.",
+                )
                 kpi_cols[1].metric(
                     label="Tasa de Abandono (Usuario)",
                     value=f"{abandon_rate:.1f}%",
-                    help="Porcentaje de conversaciones que fueron abandonadas por el usuario del total de conversaciones atendidas. Un valor alto puede indicar largos tiempos de espera."
+                    help="Fórmula: (Abandonadas / Conversaciones cerradas) × 100. Porcentaje de conversaciones abandonadas por el usuario.",
                 )
                 kpi_cols[2].metric(
                     label="Total Transferencias",
                     value=f"{int(total_transfers):,}",
-                    help="Número total de veces que los agentes transfirieron una conversación a otra cola o agente."
+                    help="Fórmula: Σ Transferencias realizadas. Número total de transferencias hechas por los agentes.",
                 )
                 kpi_cols[3].metric(
                     label="Tiempo Promedio Conversación (AHT)",
                     value=f"{avg_handle_time_seconds / 60:.1f} min" if pd.notna(avg_handle_time_seconds) else "N/A",
-                    help="Average Handle Time: Tiempo promedio total que un agente dedica a una conversación activa."
+                    help="Fórmula: Promedio(Conversación con agente) / 60. Average Handle Time en minutos.",
                 )
                 # --- NUEVO WIDGET DE KPI ---
                 kpi_cols[4].metric(
                     label="Tiempo Medio de Respuesta",
                     value=f"{avg_response_time_hours:.2f} hrs" if avg_response_time_hours > 0 else "N/A",
-                    help="Tiempo promedio que tarda un agente en enviar su primera respuesta en una conversación, medido en horas. Se ignoran las conversaciones sin respuesta."
+                    help="Fórmula: Promedio(Tiempo medio de respuesta) / 3600. Tiempo hasta la primera respuesta en horas.",
                 )
 
                 st.divider()
