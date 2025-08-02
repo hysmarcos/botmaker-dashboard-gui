@@ -458,7 +458,8 @@ if uploaded_users and uploaded_operators_sessions:
 else:
     # MEJORA 2: Mostrar video instructivo si no hay archivos cargados.
     st.info("👋 ¡Bienvenido! Sube los archivos de 'Usuarios' y 'Sesiones de Agentes' para comenzar el análisis.")
-    
-    # Opcional: Mostrar un placeholder o instrucciones más detalladas si no hay video.
-    st.image("https://placehold.co/1200x400/e8e8e8/4f4f4f?text=Por+favor+cargue+los+archivos+en+el+panel+izquierdo", use_column_width=True)
+
+    # Reproduce un video instructivo sobre cómo importar los datos
+    video_path = os.path.join("media", "instructivo_importacion.mp4")
+    st.video(video_path)
 
