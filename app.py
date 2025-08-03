@@ -282,12 +282,12 @@ if uploaded_users and uploaded_operators_sessions:
                 kpi_cols[0].metric(
                     label="Total Conversaciones Atendidas",
                     value=f"{int(total_conversations):,}",
-                    help="Total de conversaciones atendidas en el periodo.\n\n**Fórmula:** Σ Conversaciones cerradas.",
+                    help="Total de conversaciones atendidas en el periodo.\n\n**Fórmula:** Σ (<operatorSessionsDebug>.Conversaciones cerradas).",
                 )
                 kpi_cols[1].metric(
                     label="Tasa de Abandono (Usuario)",
                     value=f"{abandon_rate:.1f}%",
-                    help="Porcentaje de conversaciones abandonadas por el usuario.\n\n**Fórmula:** (Abandonadas / Conversaciones cerradas) × 100.",
+                    help="Porcentaje de conversaciones abandonadas por el usuario.\n\n**Fórmula:** (Σ <operatorSessionsDebug>.Abandonada por usuario / Σ <operatorSessionsDebug>.Conversaciones cerradas) × 100.",
                 )
                 # kpi_cols[2].metric(
                 #     label="Total Transferencias",
@@ -297,13 +297,13 @@ if uploaded_users and uploaded_operators_sessions:
                 kpi_cols[2].metric(
                     label="Tiempo Promedio Conversación (AHT)",
                     value=f"{avg_handle_time_seconds / 60:.1f} min" if pd.notna(avg_handle_time_seconds) else "N/A",
-                    help="Desde que el usuario entra en una cola hasta el cierre de la conversación.\n\n**Fórmula:** Promedio(Conversación con agente) / 60.",
+                    help="Desde que el usuario entra en una cola hasta el cierre de la conversación.\n\n**Fórmula:** Promedio(<operatorSessionsDebug>.Conversación con agente) / 60.",
                 )
                 # --- NUEVO WIDGET DE KPI ---
                 kpi_cols[3].metric(
                     label="Tiempo Medio de Respuesta",
                     value=f"{avg_response_time_hours:.2f} hrs" if avg_response_time_hours > 0 else "N/A",
-                    help="Tiempo promedio que demora un asesor en responderle al cliente cada mensaje.\n\n**Fórmula:** Promedio(Tiempo medio de respuesta) / 3600. ",
+                    help="Tiempo promedio que demora un asesor en responderle al cliente cada mensaje.\n\n**Fórmula:** Promedio(<operatorSessionsDebug>.Tiempo medio de respuesta) / 3600.",
                 )
 
                 st.divider()
@@ -314,6 +314,11 @@ if uploaded_users and uploaded_operators_sessions:
                     df_filtrado.groupby(['Fecha', 'Nombre Agente'])
                     .agg(total_conversations=('Conversaciones cerradas', 'sum'))
                     .reset_index()
+                )
+
+                st.subheader(
+                    "Volumen de Conversaciones por Día",
+                    help="Cantidad de conversaciones cerradas por día según la fecha de inicio de sesión del agente.\n\n**Fórmula:** Σ (<operatorSessionsDebug>.Conversaciones cerradas) agrupado por <operatorSessionsDebug>.Fecha/tiempo Inicio Sesión.",
                 )
 
                 view_mode = st.radio(
@@ -367,7 +372,10 @@ if uploaded_users and uploaded_operators_sessions:
 
                 chart_cols = st.columns(3)
                 with chart_cols[0]:
-                    st.subheader("Conversaciones Atendidas por Agente")
+                    st.subheader(
+                        "Total de Conversaciones por Agente",
+                        help="Total de conversaciones cerradas gestionadas por cada agente.\n\n**Fórmula:** Σ (<operatorSessionsDebug>.Conversaciones cerradas) agrupado por <operatorSessionsDebug>.Nombre Agente.",
+                    )
                     fig_convs = px.bar(
                         agent_performance, x='Nombre Agente', y='total_conversations',
                         title="Total de Conversaciones por Agente",
@@ -380,7 +388,10 @@ if uploaded_users and uploaded_operators_sessions:
                     st.info(" Muestra la cantidad total de conversaciones que cada agente ha cerrado en el periodo seleccionado. Ayuda a entender la distribución de la carga de trabajo.")
 
                 with chart_cols[1]:
-                    st.subheader("Tiempo Promedio de Conversación (AHT)")
+                    st.subheader(
+                        "Tiempo Promedio por Conversación (Minutos)",
+                        help="Tiempo promedio que cada agente invierte en una conversación.\n\n**Fórmula:** Promedio(<operatorSessionsDebug>.Conversación con agente) / 60 por <operatorSessionsDebug>.Nombre Agente.",
+                    )
                     fig_aht = px.bar(
                         agent_performance, x='Nombre Agente', y=agent_performance['avg_handle_time'] / 60,
                         title="Tiempo Promedio por Conversación (Minutos)",
@@ -399,7 +410,10 @@ if uploaded_users and uploaded_operators_sessions:
                     st.info(" Mide el tiempo promedio que un agente dedica a una conversación. Un AHT más bajo suele indicar mayor eficiencia. La línea punteada muestra el promedio de todo el equipo para una fácil comparación.")
 
                 with chart_cols[2]:
-                    st.subheader("Tiempo Medio de Respuesta por Agente")
+                    st.subheader(
+                        "Tiempo Medio de Respuesta (Horas)",
+                        help="Promedio de tiempo que tarda un agente en responder al cliente.\n\n**Fórmula:** Promedio(<operatorSessionsDebug>.Tiempo medio de respuesta) / 3600 por <operatorSessionsDebug>.Nombre Agente.",
+                    )
                     fig_response = px.bar(
                         agent_performance,
                         x='Nombre Agente',
@@ -423,6 +437,10 @@ if uploaded_users and uploaded_operators_sessions:
 
                 # --- Matriz de Eficiencia vs. Carga de Trabajo ---
                 st.header("⏺️ Matriz de Eficiencia vs. Carga de Trabajo")
+                st.subheader(
+                    "Carga de Trabajo vs. Tiempo de Manejo",
+                    help="Relaciona la cantidad de conversaciones atendidas con el tiempo promedio de manejo.\n\n**Fórmula:** Eje X: Σ (<operatorSessionsDebug>.Conversaciones cerradas). Eje Y: Promedio(<operatorSessionsDebug>.Conversación con agente) / 60. Tamaño: Σ (<users>.Mensajes Agente).",
+                )
                 fig_scatter = px.scatter(
                     agent_performance,
                     x='total_conversations',
@@ -455,7 +473,10 @@ if uploaded_users and uploaded_operators_sessions:
                 if not tipificaciones.empty:
                     col1, col2 = st.columns(2)
                     with col1:
-                        st.subheader("Distribución General de Tipificaciones")
+                        st.subheader(
+                            "Distribución General de Tipificaciones",
+                            help="Conteo total de resultados de tipificación registrados.\n\n**Fórmula:** Conteo(<users>.Tipificación).",
+                        )
                         fig_tipif_bar = px.bar(
                             tipificaciones.sort_values('Cantidad', ascending=True),
                             x='Cantidad', y='Tipificación', orientation='h',
@@ -468,7 +489,10 @@ if uploaded_users and uploaded_operators_sessions:
                         )
 
                     with col2:
-                        st.subheader("Tipificaciones por Agente")
+                        st.subheader(
+                            "Tipificaciones por Agente",
+                            help="Comparativa de resultados de tipificación para cada agente.\n\n**Fórmula:** Conteo(<users>.Tipificación) por <operatorSessionsDebug>.Nombre Agente.",
+                        )
                         tipif_by_agent = df_filtrado.groupby(['Nombre Agente', 'Tipificación_user']).size().reset_index(name='Cantidad')
                         fig_stacked_bar = px.bar(
                             tipif_by_agent, x='Nombre Agente', y='Cantidad',
