@@ -297,13 +297,13 @@ if uploaded_users and uploaded_operators_sessions:
                 kpi_cols[2].metric(
                     label="Tiempo Promedio Conversación (AHT)",
                     value=f"{avg_handle_time_seconds / 60:.1f} min" if pd.notna(avg_handle_time_seconds) else "N/A",
-                    help="Average Handle Time en minutos.\n\n**Fórmula:** Promedio(Conversación con agente) / 60.",
+                    help="Desde que el usuario entra en una cola hasta el cierre de la conversación.\n\n**Fórmula:** Promedio(Conversación con agente) / 60.",
                 )
                 # --- NUEVO WIDGET DE KPI ---
                 kpi_cols[3].metric(
                     label="Tiempo Medio de Respuesta",
                     value=f"{avg_response_time_hours:.2f} hrs" if avg_response_time_hours > 0 else "N/A",
-                    help="Tiempo hasta la primera respuesta en horas.\n\n**Fórmula:** Promedio(Tiempo medio de respuesta) / 3600. ",
+                    help="Tiempo promedio que demora un asesor en responderle al cliente cada mensaje.\n\n**Fórmula:** Promedio(Tiempo medio de respuesta) / 3600. ",
                 )
 
                 st.divider()
@@ -464,7 +464,7 @@ if uploaded_users and uploaded_operators_sessions:
                         fig_tipif_bar.update_layout(showlegend=False, yaxis_title=None)
                         st.plotly_chart(fig_tipif_bar, use_container_width=True, theme="streamlit")
                         st.info(
-                            " Este gráfico muestra el resultado final de las conversaciones. Es más fácil de leer que un gráfico de torta y permite comparar rápidamente las categorías más comunes."
+                            " Resumen de las tipificaciones de las conversaciones realizadas por los agentes. Es recomendable realizar las tipificaciones al finalizar cada conversación para una mejor categorización y análisis.\n\n"
                         )
 
                     with col2:
@@ -477,7 +477,7 @@ if uploaded_users and uploaded_operators_sessions:
                         )
                         st.plotly_chart(fig_stacked_bar, use_container_width=True, theme="streamlit")
                         st.info(
-                            " Compara cómo se distribuyen los resultados de las conversaciones entre los diferentes agentes. Ayuda a identificar si ciertos agentes se especializan o tienen mejores resultados en tipos específicos de interacciones."
+                            " Compara cómo se distribuyen los resultados de las conversaciones entre los diferentes agentes."
                         )
                 else:
                     st.info("No hay datos de tipificación disponibles para el periodo y filtros seleccionados.")
