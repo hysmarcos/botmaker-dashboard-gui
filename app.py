@@ -400,10 +400,13 @@ if uploaded_users and uploaded_operators_sessions:
                         color='Nombre Agente'
                     )
                     if pd.notna(avg_handle_time_seconds):
+                        # --- FIX: Especificar color de línea y anotación para visibilidad en dark mode ---
                         fig_aht.add_hline(
-                            y=avg_handle_time_seconds / 60, line_dash="dot",
+                            y=avg_handle_time_seconds / 60,
+                            line=dict(color="gray", width=2, dash="dot"),
                             annotation_text=f"Promedio Equipo: {avg_handle_time_seconds/60:.1f} min",
-                            annotation_position="bottom right"
+                            annotation_position="bottom right",
+                            annotation_font_color="gray"
                         )
                     fig_aht.update_layout(showlegend=False)
                     st.plotly_chart(fig_aht, use_container_width=True, theme="streamlit")
@@ -424,10 +427,13 @@ if uploaded_users and uploaded_operators_sessions:
                         color='Nombre Agente'
                     )
                     if pd.notna(avg_response_time_hours) and avg_response_time_hours > 0:
+                        # --- FIX: Especificar color de línea y anotación para visibilidad en dark mode ---
                         fig_response.add_hline(
-                            y=avg_response_time_hours, line_dash="dot",
+                            y=avg_response_time_hours,
+                            line=dict(color="gray", width=2, dash="dot"),
                             annotation_text=f"Promedio Equipo: {avg_response_time_hours:.2f} hrs",
                             annotation_position="bottom right",
+                            annotation_font_color="gray"
                         )
                     fig_response.update_layout(showlegend=False)
                     st.plotly_chart(fig_response, use_container_width=True, theme="streamlit")
@@ -512,5 +518,7 @@ else:
 
     # Reproduce un video instructivo sobre cómo importar los datos
     video_path = os.path.join("media", "instructivo_importacion.mp4")
-    st.video(video_path)
-
+    if os.path.exists(video_path):
+        st.video(video_path)
+    else:
+        st.warning("No se encontró el video instructivo.")
