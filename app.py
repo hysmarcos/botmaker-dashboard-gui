@@ -49,10 +49,11 @@ st.markdown("""
 # --- Funciones de Carga y Procesamiento de Datos ---
 
 @st.cache_data
-def load_sessions_data(uploaded_file):
+def load_sessions_data(uploaded_file, _name, _size, _nbytes):
     """Carga el archivo de sesiones de operadores, omitiendo la segunda fila de sub-encabezados."""
     if uploaded_file:
         try:
+            uploaded_file.seek(0)
             # Se usa sep='\t' y skiprows=[1] para omitir la fila de descripción que causa problemas
             return pd.read_csv(uploaded_file, sep='\t', engine='python', on_bad_lines='skip', skiprows=[1])
         except Exception as e:
@@ -61,10 +62,11 @@ def load_sessions_data(uploaded_file):
     return None
 
 @st.cache_data
-def load_users_data(uploaded_file):
+def load_users_data(uploaded_file, _name, _size, _nbytes):
     """Carga el archivo de conversaciones de usuarios."""
     if uploaded_file:
         try:
+            uploaded_file.seek(0)
             return pd.read_csv(uploaded_file, sep='\t', engine='python', on_bad_lines='skip')
         except Exception as e:
             st.error(f"Error al leer el archivo de usuarios '{uploaded_file.name}': {e}")
@@ -210,18 +212,43 @@ uploaded_operators_sessions = st.sidebar.file_uploader(
 
 # --- Lógica Principal del Dashboard ---
 if uploaded_users and uploaded_operators_sessions:
-    df_users_raw = load_users_data(uploaded_users)
-    df_sessions_raw = load_sessions_data(uploaded_operators_sessions)
+    df_users_raw = load_users_data(
+        uploaded_users,
+        uploaded_users.name,
+        uploaded_users.size,
+        uploaded_users.getbuffer().nbytes,
+    )
+    df_sessions_raw = load_sessions_data(
+        uploaded_operators_sessions,
+        uploaded_operators_sessions.name,
+        uploaded_operators_sessions.size,
+        uploaded_operators_sessions.getbuffer().nbytes,
+    )
 
     if df_users_raw is not None and df_sessions_raw is not None:
         if validate_dataframes(df_sessions_raw, df_users_raw):
             st.sidebar.success("✅ ¡Archivos cargados y validados!")
+
+            date_key = f"date_range_{uploaded_users.name}_{uploaded_users.size}_{uploaded_operators_sessions.name}_{uploaded_operators_sessions.size}"
+            if st.sidebar.button("Reset filtros"):
+                if date_key in st.session_state:
+                    st.session_state.pop(date_key)
+                st.rerun()
 
             df_procesado = clean_and_prepare_data(df_sessions_raw.copy(), df_users_raw.copy())
 
             # --- Header con Filtros ---
             st.header("🔍 Filtros de Análisis")
             with st.expander("Selecciona los filtros para acotar el análisis", expanded=True):
+                with st.expander("Diagnóstico de fechas (debug)", expanded=False):
+                    st.write({
+                        "raw_sessions_min": pd.to_datetime(df_sessions_raw['Fecha/tiempo Inicio Sesión'], errors='coerce').min(),
+                        "raw_sessions_max": pd.to_datetime(df_sessions_raw['Fecha/tiempo Inicio Sesión'], errors='coerce').max(),
+                        "procesado_min": df_procesado['Fecha'].min(),
+                        "procesado_max": df_procesado['Fecha'].max(),
+                        "registros_procesado": len(df_procesado),
+                    })
+
                 col1, col2, col3 = st.columns(3)
 
                 # Filtro de Agentes
@@ -239,12 +266,21 @@ if uploaded_users and uploaded_operators_sessions:
                 )
 
                 # Filtro de Fechas
-                min_fecha = df_procesado['Fecha'].min()
-                max_fecha = df_procesado['Fecha'].max()
+                min_fecha = min(
+                    df_procesado['Fecha'].min(),
+                    pd.to_datetime(df_users_raw['Fecha Sesión'], errors='coerce').dt.date.min(),
+                )
+                max_fecha = max(
+                    df_procesado['Fecha'].max(),
+                    pd.to_datetime(df_users_raw['Fecha Sesión'], errors='coerce').dt.date.max(),
+                )
                 fecha_seleccionada = col3.date_input(
-                    "Rango de Fechas", value=(min_fecha, max_fecha),
-                    min_value=min_fecha, max_value=max_fecha,
-                    help="Selecciona el rango de fechas para el análisis."
+                    "Rango de Fechas",
+                    value=(min_fecha, max_fecha),
+                    min_value=min_fecha,
+                    max_value=max_fecha,
+                    key=date_key,
+                    help="Selecciona el rango de fechas para el análisis.",
                 )
 
             # --- Aplicar Filtros ---
